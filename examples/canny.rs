@@ -84,19 +84,25 @@ fn main() -> Result<(), ImageError> {
     // DroG magnitude
     println!("Calculating DroG magnitude...");
     let indices_sequence = 0..normalized_image_matrix.get_data().len();
-    let drog_magnitude: DynamicMatrix<SubPixels<f64, 1>> = 
-    DynamicMatrix::new(normalized_image_matrix.get_width(), normalized_image_matrix.get_height(),
-        indices_sequence.map(|i| 
-            SubPixels([vec_magnitude(
-                drog_x_convolution.get_data()[i].0[0],
-                drog_y_convolution.get_data()[i].0[0]
-            )])
-        ).collect()).unwrap();
+    let drog_magnitude: DynamicMatrix<SubPixels<f64, 3>> = DynamicMatrix::new(
+        normalized_image_matrix.get_width(),
+        normalized_image_matrix.get_height(),
+        indices_sequence
+            .map(|i| {
+                let x = drog_x_convolution.get_data()[i].0[0];
+                let y = drog_x_convolution.get_data()[i].0[0];
+
+                SubPixels([x, y, vec_magnitude(x, y)])
+            })
+            .collect(),
+    )
+    .unwrap();
 
     GrayImage::from(
         drog_magnitude
             .clone()
-            .map_subpixels(|v| f64::round(v * 255.0) as u8),
+            .map_subpixels(|v| f64::round(v * 255.0) as u8)
+            .map(|subpixel| SubPixels([subpixel.0[2]])),
     )
     .save("test_outputs/myownlena_drog_magnitude.png")
     .unwrap();
