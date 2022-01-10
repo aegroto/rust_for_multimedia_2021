@@ -51,6 +51,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d7b894f5411737b7867f4827955924d7c254fc9f4d91a6aad6b097804b1018b"
 
 [[package]]
+name = "convolve2d"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "569b220b07b25a124dfc925bb3c7eb03970fa96973cd07314523a771bdeea924"
+dependencies = [
+ "image",
+ "rayon",
+]
+
+[[package]]
 name = "crc32fast"
 version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -298,7 +308,9 @@ dependencies = [
 name = "rust_for_multimedia"
 version = "0.1.0"
 dependencies = [
+ "convolve2d",
  "image",
+ "rayon",
 ]
 
 [[package]]
