@@ -108,9 +108,24 @@ fn predict_with_matcher(
         .collect();
 
     prediction_results.iter().for_each(|prediction| {
+        let anchor_pixels = &prediction.anchor_block.pixels.to_luma8().into_raw();
+        let target_pixels = &prediction.target_block.pixels.to_luma8().into_raw();
+
+        let error_weight: f64 = 1.0 / anchor_pixels.len() as f64;
+
+        let error: f64 = anchor_pixels
+            .into_iter()
+            .zip(target_pixels.into_iter())
+            .map(|(anchor_pixel, target_pixel)| (*anchor_pixel as i16, *target_pixel as i16))
+            .map(|(anchor_pixel, target_pixel)| {
+                let pixel_error = (anchor_pixel - target_pixel).pow(2) as f64;
+                pixel_error * error_weight
+            })
+            .sum();
+
         println!(
-            "MAE between anchor {} and target {}: {}",
-            prediction.anchor_frame_index, prediction.target_frame_index, 0.0
+            "Error between anchor {} and target {}: {}",
+            prediction.anchor_frame_index, prediction.target_frame_index, error
         );
     });
 }

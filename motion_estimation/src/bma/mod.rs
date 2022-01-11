@@ -1,4 +1,4 @@
-use image::{DynamicImage, GrayImage};
+use image::{DynamicImage};
 
 use crate::ExtractedBlock;
 
