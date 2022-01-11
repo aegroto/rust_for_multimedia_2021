@@ -74,9 +74,15 @@ fn predict_with_matcher(
     matcher: NaiveBlockMatcher,
 ) {
     let anchor_frame_indices = 0..frames.len() - 1;
-    let target_frame_indices = 1..frames.len();
+    // let target_frame_indices = 1..frames.len();
 
-    let prediction_indices_pairs = anchor_frame_indices.cartesian_product(target_frame_indices);
+    let prediction_indices_pairs = anchor_frame_indices.flat_map(|anchor_frame_index| {
+        (anchor_frame_index..).zip(anchor_frame_index+1..frames.len())
+    });
+
+    prediction_indices_pairs.for_each(|pair| println!("Pair: {:?}", pair));
+
+    panic!("Test");
 
     let prediction_results: Vec<PredictionResult> = prediction_indices_pairs
         .map(|(anchor_frame_index, target_frame_index)| {
