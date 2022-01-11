@@ -46,3 +46,10 @@ impl Edge {
         (self.x_dir, self.y_dir)
     }
 }
+
+#[derive(Copy, Clone, Debug)]
+pub enum ThresholdedEdge {
+    STRONG,
+    WEAK,
+    NULL 
+}

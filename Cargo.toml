@@ -9,3 +9,4 @@ edition = "2021"
 image = "0.23.14"
 convolve2d = { version = "0.1.0", features = ["full"] }
 rayon = "1.5.1"
+itertools = "0.10.3"
