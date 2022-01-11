@@ -33,9 +33,11 @@ pub fn perform_drog_convolution(
     )
     .save("test_outputs/myownlena_drog_y.png")
     .unwrap();
+
     println!("Calculating DroG magnitude...");
     let indices_sequence = 0..normalized_image_matrix.get_data().len();
-    let drog_magnitude: DynamicMatrix<Edge> = DynamicMatrix::new(
+
+    let drog_edges: DynamicMatrix<Edge> = DynamicMatrix::new(
         normalized_image_matrix.get_width(),
         normalized_image_matrix.get_height(),
         indices_sequence
@@ -49,14 +51,5 @@ pub fn perform_drog_convolution(
     )
     .unwrap();
 
-    GrayImage::from(
-        drog_magnitude
-            .clone()
-            .map(|edge| SubPixels([edge.get_magnitude()]))
-            .map_subpixels(|v| f64::round(v * 255.0) as u8)
-    )
-    .save("test_outputs/myownlena_drog_magnitude.png")
-    .unwrap();
-
-    drog_magnitude
+    drog_edges
 }

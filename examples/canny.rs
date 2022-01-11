@@ -1,7 +1,9 @@
 use image::{GrayImage, ImageError};
 
 use convolve2d::*;
-use rust_for_multimedia::{drog::perform_drog_convolution, nonmax::perform_nonmax_suppression};
+use rust_for_multimedia::{
+    drog::perform_drog_convolution, edge::Edge, nonmax::perform_nonmax_suppression,
+};
 
 fn main() -> Result<(), ImageError> {
     // Params
@@ -20,6 +22,15 @@ fn main() -> Result<(), ImageError> {
 
     // DroG convolution
     let drog_edges = perform_drog_convolution(&normalized_image_matrix, kernel_size, sigma);
+    GrayImage::from(
+        drog_edges
+            .clone()
+            .map(|edge| SubPixels([edge.get_magnitude()]))
+            .map_subpixels(|v| f64::round(v * 255.0) as u8),
+    )
+    .save("test_outputs/myownlena_drog_magnitude.png")
+    .unwrap();
+    count_nonzero_edges(&drog_edges);
 
     // Non-maximum suppression
     println!("Applying non-maximum suppression...");
@@ -28,8 +39,8 @@ fn main() -> Result<(), ImageError> {
         normalized_image_matrix.get_height(),
     );
 
-    let nonmax_edges =
-        perform_nonmax_suppression(width, height, &drog_edges, 25);
+    let nonmax_edges = perform_nonmax_suppression(width, height, &drog_edges, 25);
+    count_nonzero_edges(&nonmax_edges);
 
     GrayImage::from(
         nonmax_edges
@@ -40,24 +51,16 @@ fn main() -> Result<(), ImageError> {
     .save("test_outputs/myownlena_nonmax.png")
     .unwrap();
 
-    println!(
-        "Drog non-zero magnitudes: {}",
-        drog_edges
-            .get_data()
-            .iter()
-            .filter(|edge| edge.get_magnitude() > 0.0)
-            .count()
-    );
-
-    println!(
-        "Non-max non-zero magnitudes: {}",
-        nonmax_edges
-            .get_data()
-            .iter()
-            .filter(|edge| edge.get_magnitude() > 0.0)
-            .count()
-    );
-
     Ok(())
 }
 
+fn count_nonzero_edges(edges: &DynamicMatrix<Edge>) {
+    println!(
+        "Non-zero magnitudes: {}",
+        edges
+            .get_data()
+            .iter()
+            .filter(|edge| edge.get_magnitude() > 0.0)
+            .count()
+    );
+}
