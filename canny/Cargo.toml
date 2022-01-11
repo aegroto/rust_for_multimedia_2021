@@ -1,5 +1,5 @@
 [package]
-name = "rust_for_multimedia"
+name = "rust_for_multimedia_canny"
 version = "0.1.0"
 edition = "2021"
 

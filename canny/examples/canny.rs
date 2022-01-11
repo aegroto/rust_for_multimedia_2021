@@ -1,7 +1,7 @@
 use image::{GrayImage, ImageError};
 
 use convolve2d::*;
-use rust_for_multimedia::{
+use rust_for_multimedia_canny::{
     drog::perform_drog_convolution,
     edge::{Edge, ThresholdedEdge},
     hysteresis::perform_hysteresis_thresholding,
