@@ -26,9 +26,10 @@ fn export_block_from_image(
     mb_size: u32,
     file_name: &str,
 ) -> Result<(), ImageError> {
-    let topleft_corner = img.crop_imm(x_offset, y_offset, mb_size, mb_size);
+    let block = img.crop_imm(x_offset, y_offset, mb_size, mb_size);
     let output_folder = format!("output/{}", block_id);
     fs::create_dir_all(&output_folder)?;
-    topleft_corner.save(format!("{}/{}", output_folder, file_name))?;
+
+    block.to_luma8().save(format!("{}/{}", output_folder, file_name))?;
     Ok(())
 }
