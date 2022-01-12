@@ -1,24 +1,16 @@
 mod bma;
+mod utils;
+mod types;
 
 use std::fs;
 
+use bma::exhaustive::ExhaustiveBlockMatcher;
 use image::{DynamicImage, GrayImage, ImageError};
 use itertools::Itertools;
+use types::{ExtractedBlock, PredictionResult};
+use utils::extract_blocks;
 
-use crate::bma::{naive::NaiveBlockMatcher, BlockMatcher};
-
-pub struct ExtractedBlock {
-    pub x_offset: u32,
-    pub y_offset: u32,
-    pub pixels: DynamicImage,
-}
-
-struct PredictionResult<'a> {
-    anchor_frame_index: usize,
-    target_frame_index: usize,
-    anchor_block: &'a ExtractedBlock,
-    target_block: ExtractedBlock,
-}
+use crate::{bma::{naive::NaiveBlockMatcher, BlockMatcher}, utils::export_block};
 
 fn main() {
     let mb_size = 16;
@@ -63,7 +55,8 @@ fn main() {
         &topleft_blocks,
         &frames,
         "topleft/naive",
-        NaiveBlockMatcher::new(),
+        // NaiveBlockMatcher::new(),
+        Box::new(ExhaustiveBlockMatcher::new(2))
     );
 }
 
@@ -71,7 +64,7 @@ fn predict_with_matcher(
     anchor_blocks: &Vec<ExtractedBlock>,
     frames: &Vec<(String, DynamicImage)>,
     parent_folder: &str,
-    matcher: NaiveBlockMatcher,
+    matcher: Box<dyn BlockMatcher>,
 ) {
     let anchor_frame_indices = 0..frames.len() - 1;
     // let target_frame_indices = 1..frames.len();
@@ -130,53 +123,4 @@ fn predict_with_matcher(
             prediction.anchor_frame_index, prediction.target_frame_index, error
         );
     });
-}
-
-fn extract_blocks(
-    parent_folder: &str,
-    images: &Vec<(String, DynamicImage)>,
-    x_offset: u32,
-    y_offset: u32,
-    mb_size: u32,
-) -> Vec<ExtractedBlock> {
-    println!(
-        "Extracting '{}' blocks with offset ({}, {})...",
-        parent_folder, x_offset, y_offset
-    );
-
-    images
-        .iter()
-        .map(|(file_name, img)| {
-            let pixels = crop_block_from_image(&img, x_offset, y_offset, mb_size).unwrap();
-            export_block(parent_folder, &pixels, &file_name).unwrap();
-
-            ExtractedBlock {
-                x_offset,
-                y_offset,
-                pixels: DynamicImage::ImageLuma8(pixels),
-            }
-        })
-        .collect()
-}
-
-fn crop_block_from_image(
-    img: &image::DynamicImage,
-    x_offset: u32,
-    y_offset: u32,
-    mb_size: u32,
-) -> Result<GrayImage, ImageError> {
-    let block = img.crop_imm(x_offset, y_offset, mb_size, mb_size);
-    let block = block.to_luma8();
-    Ok(block)
-}
-
-fn export_block(
-    parent_folder: &str,
-    block_img: &image::ImageBuffer<image::Luma<u8>, Vec<u8>>,
-    file_name: &str,
-) -> Result<(), ImageError> {
-    let output_folder = format!("output/{}", parent_folder);
-    fs::create_dir_all(&output_folder)?;
-    block_img.save(format!("{}/{}", output_folder, file_name))?;
-    Ok(())
 }
