@@ -10,7 +10,7 @@ use itertools::Itertools;
 use types::{ExtractedBlock, PredictionResult};
 use utils::extract_blocks;
 
-use crate::{bma::{naive::NaiveBlockMatcher, BlockMatcher}, utils::{calculate_block_prediction_error, export_block}};
+use crate::{bma::{BlockMatcher, naive::NaiveBlockMatcher, three_step::ThreeStepBlockMatcher}, utils::{calculate_block_prediction_error, export_block}};
 
 fn main() {
     let mb_size = 16;
@@ -48,14 +48,14 @@ fn main() {
         id.parse::<i32>().unwrap()
     });
 
-    let topleft_blocks = extract_blocks("topleft/original", &frames, 0, 0, mb_size);
-    let central_blocks = extract_blocks("central/original", &frames, 190, 80, mb_size);
+    // let topleft_blocks = extract_blocks("topleft/original", &frames, 0, 0, mb_size);
+    let anchor_blocks = extract_blocks("central/original", &frames, 190, 80, mb_size);
     // let central_blocks = extract_blocks("central", &images, 190, 80, mb_size);
 
     println!(" --- Central block, naive predictor");
     let start_time = Instant::now();
     predict_with_matcher(
-        &central_blocks,
+        &anchor_blocks,
         &frames,
         "central/naive",
         Box::new(NaiveBlockMatcher::new())
@@ -65,10 +65,20 @@ fn main() {
     println!(" --- Central block, exhaustive predictor");
     let start_time = Instant::now();
     predict_with_matcher(
-        &central_blocks,
+        &anchor_blocks,
         &frames,
         "central/exhaustive",
         Box::new(ExhaustiveBlockMatcher::new(25))
+    );
+    println!(" --- Execution time: {}s", start_time.elapsed().as_secs_f64());
+
+    println!(" --- Central block, three-step predictor");
+    let start_time = Instant::now();
+    predict_with_matcher(
+        &anchor_blocks,
+        &frames,
+        "central/three_step",
+        Box::new(ThreeStepBlockMatcher::new(25))
     );
     println!(" --- Execution time: {}s", start_time.elapsed().as_secs_f64());
 }
