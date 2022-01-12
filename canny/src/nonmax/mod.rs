@@ -52,7 +52,7 @@ fn is_max(
 ) -> bool {
     let distance_range = distance_range as i32;
     for distance in -distance_range..distance_range {
-        let (dir_x, dir_y) = edge.dir();
+        let (dir_x, dir_y) = edge.dir_norm();
 
         let (near_row_offset, near_col_offset): (i32, i32) = (
             (dir_x.signum() as i32) * (if dir_x.abs() > 0.25 { distance } else { 0 }),

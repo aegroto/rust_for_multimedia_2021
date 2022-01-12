@@ -21,15 +21,15 @@ fn main() -> Result<(), ImageError> {
 
     let image_matrix: DynamicMatrix<SubPixels<u8, 1>> = image_luma.into();
 
-    let normalized_image_matrix = image_matrix.map_subpixels(|x| (x as f64) / 255.0);
+    let normalized_image_matrix = image_matrix.map_subpixels(normalize_subpixel);
 
     // DroG convolution
     let drog_edges = perform_drog_convolution(&normalized_image_matrix, kernel_size, sigma);
     GrayImage::from(
         drog_edges
             .clone()
-            .map(|edge| SubPixels([edge.get_magnitude()]))
-            .map_subpixels(|v| f64::round(v * 255.0) as u8),
+            .map(edge_to_subpixel)
+            .map_subpixels(denormalize_subpixel),
     )
     .save("test_outputs/myownlena_drog_magnitude.png")
     .unwrap();
@@ -42,20 +42,21 @@ fn main() -> Result<(), ImageError> {
         normalized_image_matrix.get_height(),
     );
 
-    let nonmax_edges = perform_nonmax_suppression(width, height, &drog_edges, 25);
+    let nonmax_edges = perform_nonmax_suppression(width, height, &drog_edges, 5);
     count_nonzero_edges(&nonmax_edges);
 
     GrayImage::from(
         nonmax_edges
             .clone()
-            .map(|edge| SubPixels([edge.get_magnitude()]))
-            .map_subpixels(|v| f64::round(v * 255.0) as u8),
+            .map(edge_to_subpixel)
+            .map_subpixels(denormalize_subpixel),
     )
     .save("test_outputs/myownlena_nonmax.png")
     .unwrap();
 
-    let thresholded_edges = perform_hysteresis_thresholding(width, height,
-         &nonmax_edges, 0.05, 0.1, 2);
+    // Hysteresis thresholding
+    let thresholded_edges =
+        perform_hysteresis_thresholding(width, height, &nonmax_edges, 0.05, 0.1, 3);
     count_edge_types(&thresholded_edges);
 
     GrayImage::from(thresholded_edges.clone().map(thresholded_edge_to_subpixels))
@@ -63,6 +64,18 @@ fn main() -> Result<(), ImageError> {
         .unwrap();
 
     Ok(())
+}
+
+fn normalize_subpixel(x: u8) -> f64 {
+    (x as f64) / 255.0
+}
+
+fn denormalize_subpixel(v: f64) -> u8 {
+    f64::round(v * 255.0) as u8
+}
+
+fn edge_to_subpixel(edge: Edge) -> SubPixels<f64, 1> {
+    SubPixels([edge.get_magnitude()])
 }
 
 fn thresholded_edge_to_subpixels(edge: ThresholdedEdge) -> SubPixels<u8, 1> {
