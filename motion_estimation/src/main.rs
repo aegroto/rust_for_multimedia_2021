@@ -2,7 +2,7 @@ mod bma;
 mod utils;
 mod types;
 
-use std::{fs, time::Instant};
+use std::{fs, ops::Div, time::Instant};
 
 use bma::exhaustive::ExhaustiveBlockMatcher;
 use image::{DynamicImage, GrayImage, ImageError};
@@ -68,7 +68,7 @@ fn main() {
         &central_blocks,
         &frames,
         "central/exhaustive",
-        Box::new(ExhaustiveBlockMatcher::new(5))
+        Box::new(ExhaustiveBlockMatcher::new(25))
     );
     println!(" --- Execution time: {}s", start_time.elapsed().as_secs_f64());
 }
@@ -115,7 +115,7 @@ fn predict_with_matcher(
         })
         .collect();
 
-    prediction_results.iter().for_each(|prediction| {
+    let prediction_errors = prediction_results.iter().map(|prediction| {
         let anchor_block = prediction.anchor_block;
         let target_block = &prediction.target_block;
         let error = calculate_block_prediction_error(&anchor_block.pixels, &target_block.pixels);
@@ -124,5 +124,11 @@ fn predict_with_matcher(
             "Error between anchor {} and target {}: {}",
             prediction.anchor_frame_index, prediction.target_frame_index, error
         );
+
+        error
     });
+
+    println!("Average error: {}", prediction_errors
+        .sum::<f64>()
+        .div(prediction_results.len() as f64));
 }
