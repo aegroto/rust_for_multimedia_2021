@@ -1,4 +1,5 @@
 use image::{DynamicImage, GenericImageView};
+use log::debug;
 
 use crate::{utils::calculate_block_prediction_error, ExtractedBlock};
 
@@ -48,7 +49,7 @@ impl BlockMatcher for ThreeStepBlockMatcher {
             }
         };
 
-        println!(
+        debug!(
             "Prediction: ({}, {})",
             predicted_block.x_offset, predicted_block.y_offset
         );
@@ -69,10 +70,10 @@ fn get_best_prediction_in_offsets(
     let predicted_block = prediction_offsets
         .iter()
         .map(|(x_offset, y_offset)| {
-            /*println!(
+            debug!(
                 "Extracting block from offset ({}, {})...",
                 x_offset, y_offset
-            );*/
+            );
             extract_block_from_offset(anchor_pos, (*x_offset, *y_offset), frame, mb_size)
         })
         .filter(Option::is_some)

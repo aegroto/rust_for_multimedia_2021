@@ -1,6 +1,7 @@
 use std::fs;
 
 use image::{DynamicImage, GrayImage, ImageError};
+use log::debug;
 
 use crate::types::ExtractedBlock;
 
@@ -11,7 +12,7 @@ pub fn extract_blocks(
     y_offset: u32,
     mb_size: u32,
 ) -> Vec<ExtractedBlock> {
-    println!(
+    debug!(
         "Extracting '{}' blocks with offset ({}, {})...",
         parent_folder, x_offset, y_offset
     );

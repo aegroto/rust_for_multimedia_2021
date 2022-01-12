@@ -5,21 +5,24 @@ mod types;
 use std::{fs, ops::Div, time::Instant};
 
 use bma::exhaustive::ExhaustiveBlockMatcher;
-use image::{DynamicImage, GrayImage, ImageError};
+use image::{DynamicImage};
 use itertools::Itertools;
+use log::{debug, info};
 use types::{ExtractedBlock, PredictionResult};
 use utils::extract_blocks;
 
 use crate::{bma::{BlockMatcher, naive::NaiveBlockMatcher, three_step::ThreeStepBlockMatcher}, utils::{calculate_block_prediction_error, export_block}};
 
 fn main() {
+    env_logger::init();
+
     let mb_size = 16;
 
     let mut frames: Vec<(String, DynamicImage)> = fs::read_dir("assets/meatthezoo_frames")
         .unwrap()
         .map(|file| {
             let path = file.unwrap().path();
-            println!("Loading frame {:?}...", path);
+            info!("Loading frame {:?}...", path);
 
             let file_name = path
                 .clone()
@@ -48,11 +51,10 @@ fn main() {
         id.parse::<i32>().unwrap()
     });
 
-    // let topleft_blocks = extract_blocks("topleft/original", &frames, 0, 0, mb_size);
+    // let anchor_blocks = extract_blocks("topleft/original", &frames, 0, 0, mb_size);
     let anchor_blocks = extract_blocks("central/original", &frames, 190, 80, mb_size);
-    // let central_blocks = extract_blocks("central", &images, 190, 80, mb_size);
 
-    println!(" --- Central block, naive predictor");
+    info!(" --- Naive predictor");
     let start_time = Instant::now();
     predict_with_matcher(
         &anchor_blocks,
@@ -60,9 +62,9 @@ fn main() {
         "central/naive",
         Box::new(NaiveBlockMatcher::new())
     );
-    println!(" --- Execution time: {}s", start_time.elapsed().as_secs_f64());
+    info!(" Execution time: {}s", start_time.elapsed().as_secs_f64());
 
-    println!(" --- Central block, exhaustive predictor");
+    info!(" --- Exhaustive predictor");
     let start_time = Instant::now();
     predict_with_matcher(
         &anchor_blocks,
@@ -70,9 +72,9 @@ fn main() {
         "central/exhaustive",
         Box::new(ExhaustiveBlockMatcher::new(25))
     );
-    println!(" --- Execution time: {}s", start_time.elapsed().as_secs_f64());
+    info!(" Execution time: {}s", start_time.elapsed().as_secs_f64());
 
-    println!(" --- Central block, three-step predictor");
+    info!(" --- Three-step predictor");
     let start_time = Instant::now();
     predict_with_matcher(
         &anchor_blocks,
@@ -80,7 +82,7 @@ fn main() {
         "central/three_step",
         Box::new(ThreeStepBlockMatcher::new(25))
     );
-    println!(" --- Execution time: {}s", start_time.elapsed().as_secs_f64());
+    info!(" Execution time: {}s", start_time.elapsed().as_secs_f64());
 }
 
 fn predict_with_matcher(
@@ -102,7 +104,7 @@ fn predict_with_matcher(
             let anchor_frame_id = anchor_frame_index + 1;
             let (target_frame_id, target_frame) = &frames[target_frame_index];
 
-            println!(
+            debug!(
                 "Matching block from anchor {} to target frame {}",
                 anchor_frame_id, target_frame_id
             );
@@ -130,7 +132,7 @@ fn predict_with_matcher(
         let target_block = &prediction.target_block;
         let error = calculate_block_prediction_error(&anchor_block.pixels, &target_block.pixels);
 
-        println!(
+        debug!(
             "Error between anchor {} and target {}: {}",
             prediction.anchor_frame_index, prediction.target_frame_index, error
         );
@@ -138,7 +140,7 @@ fn predict_with_matcher(
         error
     });
 
-    println!("Average error: {}", prediction_errors
+    info!(" Average error: {}", prediction_errors
         .sum::<f64>()
         .div(prediction_results.len() as f64));
 }

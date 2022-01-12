@@ -1,5 +1,6 @@
 use image::{DynamicImage, GenericImageView};
 use itertools::Itertools;
+use log::debug;
 
 use crate::{utils::calculate_block_prediction_error, ExtractedBlock};
 
@@ -43,7 +44,7 @@ impl BlockMatcher for ExhaustiveBlockMatcher {
             .map(|(predicted_block, _)| predicted_block)
             .unwrap();
 
-        println!(
+        debug!(
             "Prediction: ({}, {})",
             predicted_block.x_offset, predicted_block.y_offset
         );
