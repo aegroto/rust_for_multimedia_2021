@@ -52,3 +52,19 @@ pub fn export_block(
     block_img.save(format!("{}/{}", output_folder, file_name))?;
     Ok(())
 }
+
+pub fn calculate_block_prediction_error(anchor_block: &DynamicImage, target_block: &DynamicImage) -> f64 {
+    let anchor_pixels = anchor_block.to_luma8().into_raw();
+    let target_pixels = target_block.to_luma8().into_raw();
+    let error_weight: f64 = 1.0 / anchor_pixels.len() as f64;
+    let error: f64 = anchor_pixels
+        .into_iter()
+        .zip(target_pixels.into_iter())
+        .map(|(anchor_pixel, target_pixel)| (anchor_pixel as i16, target_pixel as i16))
+        .map(|(anchor_pixel, target_pixel)| {
+            let pixel_error = (anchor_pixel - target_pixel).abs() as f64;
+            pixel_error * error_weight
+        })
+        .sum();
+    error
+}

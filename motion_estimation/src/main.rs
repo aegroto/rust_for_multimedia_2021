@@ -2,7 +2,7 @@ mod bma;
 mod utils;
 mod types;
 
-use std::fs;
+use std::{fs, time::Instant};
 
 use bma::exhaustive::ExhaustiveBlockMatcher;
 use image::{DynamicImage, GrayImage, ImageError};
@@ -10,7 +10,7 @@ use itertools::Itertools;
 use types::{ExtractedBlock, PredictionResult};
 use utils::extract_blocks;
 
-use crate::{bma::{naive::NaiveBlockMatcher, BlockMatcher}, utils::export_block};
+use crate::{bma::{naive::NaiveBlockMatcher, BlockMatcher}, utils::{calculate_block_prediction_error, export_block}};
 
 fn main() {
     let mb_size = 16;
@@ -49,15 +49,28 @@ fn main() {
     });
 
     let topleft_blocks = extract_blocks("topleft/original", &frames, 0, 0, mb_size);
+    let central_blocks = extract_blocks("central/original", &frames, 190, 80, mb_size);
     // let central_blocks = extract_blocks("central", &images, 190, 80, mb_size);
 
+    println!(" --- Central block, naive predictor");
+    let start_time = Instant::now();
     predict_with_matcher(
-        &topleft_blocks,
+        &central_blocks,
         &frames,
-        "topleft/naive",
-        // NaiveBlockMatcher::new(),
-        Box::new(ExhaustiveBlockMatcher::new(2))
+        "central/naive",
+        Box::new(NaiveBlockMatcher::new())
     );
+    println!(" --- Execution time: {}s", start_time.elapsed().as_secs_f64());
+
+    println!(" --- Central block, exhaustive predictor");
+    let start_time = Instant::now();
+    predict_with_matcher(
+        &central_blocks,
+        &frames,
+        "central/exhaustive",
+        Box::new(ExhaustiveBlockMatcher::new(5))
+    );
+    println!(" --- Execution time: {}s", start_time.elapsed().as_secs_f64());
 }
 
 fn predict_with_matcher(
@@ -103,20 +116,9 @@ fn predict_with_matcher(
         .collect();
 
     prediction_results.iter().for_each(|prediction| {
-        let anchor_pixels = &prediction.anchor_block.pixels.to_luma8().into_raw();
-        let target_pixels = &prediction.target_block.pixels.to_luma8().into_raw();
-
-        let error_weight: f64 = 1.0 / anchor_pixels.len() as f64;
-
-        let error: f64 = anchor_pixels
-            .into_iter()
-            .zip(target_pixels.into_iter())
-            .map(|(anchor_pixel, target_pixel)| (*anchor_pixel as i16, *target_pixel as i16))
-            .map(|(anchor_pixel, target_pixel)| {
-                let pixel_error = (anchor_pixel - target_pixel).pow(2) as f64;
-                pixel_error * error_weight
-            })
-            .sum();
+        let anchor_block = prediction.anchor_block;
+        let target_block = &prediction.target_block;
+        let error = calculate_block_prediction_error(&anchor_block.pixels, &target_block.pixels);
 
         println!(
             "Error between anchor {} and target {}: {}",
