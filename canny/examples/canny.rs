@@ -42,7 +42,7 @@ fn main() -> Result<(), ImageError> {
         normalized_image_matrix.get_height(),
     );
 
-    let nonmax_edges = perform_nonmax_suppression(width, height, &drog_edges, 5);
+    let nonmax_edges = perform_nonmax_suppression(width, height, &drog_edges, 3);
     count_nonzero_edges(&nonmax_edges);
 
     GrayImage::from(

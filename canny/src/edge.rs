@@ -8,10 +8,10 @@ pub struct Edge {
 }
 
 impl Edge {
-    pub fn new(x: f64, y: f64) -> Self {
-        let x_dir = FRAC_1_SQRT_2 * x;
-        let y_dir = FRAC_1_SQRT_2 * y;
-        let magnitude = f64::hypot(x_dir, y_dir);
+    pub fn new(vec_x: f64, vec_y: f64) -> Self {
+        let vec_x = FRAC_1_SQRT_2 * vec_x;
+        let vec_y = FRAC_1_SQRT_2 * vec_y;
+        let magnitude = f64::hypot(vec_x, vec_y);
 
         let magnitude_recip = if magnitude != 0.0 {
             magnitude.recip()
@@ -20,8 +20,8 @@ impl Edge {
         };
 
         Self {
-            x_dir: x_dir * magnitude_recip,
-            y_dir: y_dir * magnitude_recip,
+            x_dir: vec_x * magnitude_recip,
+            y_dir: vec_y * magnitude_recip,
             magnitude
         }
     }
