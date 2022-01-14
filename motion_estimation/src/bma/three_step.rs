@@ -45,7 +45,7 @@ impl BlockMatcher for ThreeStepBlockMatcher {
             if r <= 1 {
                 break new_anchor;
             } else {
-                anchor_pos = (new_anchor.x_offset as i32, block.y_offset as i32)
+                anchor_pos = (new_anchor.x_offset as i32, new_anchor.y_offset as i32)
             }
         };
 
